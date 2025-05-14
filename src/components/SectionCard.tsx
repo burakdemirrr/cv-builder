@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { CVSection } from '@/lib/supabase';
 import { useStore } from '@/lib/store';
+import SectionEditor from './SectionEditor';
 
 interface SectionCardProps {
   section: CVSection;
@@ -12,6 +13,7 @@ interface SectionCardProps {
 
 export default function SectionCard({ section, onRemove }: SectionCardProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [title, setTitle] = useState(section.title);
   const { updateSection } = useStore();
   
@@ -52,48 +54,66 @@ export default function SectionCard({ section, onRemove }: SectionCardProps) {
   };
   
   return (
-    <div className="glass-card p-4 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <span className="text-xl" role="img" aria-label={section.type}>
-          {getSectionIcon(section.type)}
-        </span>
+    <div className="glass-card">
+      <div className="p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-xl" role="img" aria-label={section.type}>
+            {getSectionIcon(section.type)}
+          </span>
+          
+          {isEditing ? (
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onBlur={handleSave}
+              onKeyDown={handleKeyDown}
+              className="glass-input py-1 px-2"
+              autoFocus
+            />
+          ) : (
+            <span className="font-medium">{section.title}</span>
+          )}
+        </div>
         
-        {isEditing ? (
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onBlur={handleSave}
-            onKeyDown={handleKeyDown}
-            className="glass-input py-1 px-2"
-            autoFocus
-          />
-        ) : (
-          <span className="font-medium">{section.title}</span>
-        )}
+        <div className="flex gap-2">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            className="p-1 hover:bg-white hover:bg-opacity-10 rounded"
+            onClick={() => setIsExpanded(!isExpanded)}
+            title={isExpanded ? "Collapse" : "Expand"}
+          >
+            {isExpanded ? '🔼' : '🔽'}
+          </motion.button>
+          
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            className="p-1 hover:bg-white hover:bg-opacity-10 rounded"
+            onClick={() => setIsEditing(!isEditing)}
+            title={isEditing ? "Save" : "Edit title"}
+          >
+            {isEditing ? '💾' : '✏️'}
+          </motion.button>
+          
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            className="p-1 hover:bg-white hover:bg-opacity-10 rounded text-red-300"
+            onClick={onRemove}
+            title="Remove section"
+          >
+            🗑️
+          </motion.button>
+        </div>
       </div>
       
-      <div className="flex gap-2">
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          className="p-1 hover:bg-white hover:bg-opacity-10 rounded"
-          onClick={() => setIsEditing(!isEditing)}
-          title={isEditing ? "Save" : "Edit title"}
-        >
-          {isEditing ? '💾' : '✏️'}
-        </motion.button>
-        
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          className="p-1 hover:bg-white hover:bg-opacity-10 rounded text-red-300"
-          onClick={onRemove}
-          title="Remove section"
-        >
-          🗑️
-        </motion.button>
-      </div>
+      {isExpanded && (
+        <div className="px-4 pb-4">
+          <SectionEditor section={section} />
+        </div>
+      )}
     </div>
   );
 } 

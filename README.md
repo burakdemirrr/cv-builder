@@ -1,10 +1,10 @@
 # CV Builder
 
-A modern CV builder web application built with Next.js 14 (App Router), Tailwind CSS, and Supabase. Features a glassmorphism UI theme, drag-and-drop section editor, and PDF export functionality.
+A modern CV builder web application built with Next.js 14 (App Router), Tailwind CSS, and Neon Database. Features a glassmorphism UI theme, drag-and-drop section editor, and PDF export functionality.
 
 ## Features
 
-- **User Authentication**: Email/password sign-up & login via Supabase
+- **User Authentication**: Email/password sign-up & login with NextAuth
 - **Drag-and-Drop Section Editor**: Reorder, add, and remove CV sections using Framer Motion
 - **Multiple CV Templates**: Choose from different layouts for your CV
 - **Glassmorphism UI**: Modern, semi-transparent UI with blur effects
@@ -24,46 +24,20 @@ cd cv-builder
 npm install
 ```
 
-3. Create a `.env.local` file in the root directory with your Supabase credentials:
+3. Create a `.env.local` file in the root directory with your credentials:
 ```
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+DATABASE_URL="postgresql://username:password@hostname:port/database"
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-nextauth-secret"
 ```
 
-4. Set up your Supabase project:
-   - Create a new project at [supabase.com](https://supabase.com)
-   - Enable email authentication in Auth settings
-   - Create the following table:
-     ```sql
-     CREATE TABLE cvs (
-       id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-       user_id UUID REFERENCES auth.users(id) NOT NULL,
-       title TEXT NOT NULL,
-       content JSONB NOT NULL,
-       template TEXT NOT NULL,
-       created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-       updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-     );
-
-     -- Create RLS policies
-     ALTER TABLE cvs ENABLE ROW LEVEL SECURITY;
-
-     CREATE POLICY "Users can view their own CVs" 
-       ON cvs FOR SELECT 
-       USING (auth.uid() = user_id);
-
-     CREATE POLICY "Users can insert their own CVs" 
-       ON cvs FOR INSERT 
-       WITH CHECK (auth.uid() = user_id);
-
-     CREATE POLICY "Users can update their own CVs" 
-       ON cvs FOR UPDATE 
-       USING (auth.uid() = user_id);
-
-     CREATE POLICY "Users can delete their own CVs" 
-       ON cvs FOR DELETE 
-       USING (auth.uid() = user_id);
-     ```
+4. Set up your Neon database:
+   - Create a new project at [neon.tech](https://neon.tech)
+   - Copy your database connection string to `.env.local`
+   - Push the schema to your database:
+   ```bash
+   npx prisma db push
+   ```
 
 5. Run the development server:
 ```bash
@@ -78,8 +52,9 @@ npm run dev
 - React 18
 - Tailwind CSS
 - Framer Motion
-- Supabase
-- Zustand
+- Prisma
+- NextAuth.js
+- Neon Database
 - html2canvas
 - jsPDF
 
@@ -87,4 +62,5 @@ npm run dev
 
 - `/src/app`: Next.js App Router pages
 - `/src/components`: Reusable React components
-- `/src/lib`: Utility functions, hooks, and store 
+- `/src/lib`: Utility functions, hooks, and store
+- `/prisma`: Database schema 

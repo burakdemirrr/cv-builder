@@ -36,4 +36,51 @@ body {
   .glass-input {
     @apply bg-transparent border border-glass-border rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-400;
   }
+}
+
+/* CV Templates */
+.cv-modern {
+  font-family: 'Inter', sans-serif;
+  border-top: 4px solid #8b5cf6;
+}
+
+.cv-modern h1 {
+  color: #8b5cf6;
+}
+
+.cv-modern h2 {
+  color: #8b5cf6;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.cv-classic {
+  font-family: 'Georgia', serif;
+  border: 1px solid #e5e7eb;
+}
+
+.cv-classic h1 {
+  text-align: center;
+  border-bottom: 1px solid #000;
+  padding-bottom: 0.5rem;
+}
+
+.cv-classic h2 {
+  border-bottom: 1px solid #000;
+  font-variant: small-caps;
+}
+
+.cv-creative {
+  font-family: 'Arial', sans-serif;
+  background: linear-gradient(to right, white, #f9fafb);
+  border-left: 10px solid #ec4899;
+}
+
+.cv-creative h1 {
+  color: #ec4899;
+  font-weight: 900;
+}
+
+.cv-creative h2 {
+  color: #ec4899;
+  font-weight: 700;
 } 

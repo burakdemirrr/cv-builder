@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/lib/useAuth';
-import { supabase, CV } from '@/lib/supabase';
+import { getCVById, updateCV } from '@/lib/cv-service';
 import { useStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
 import DragDropContainer from '@/components/DragDropContainer';
@@ -10,13 +9,22 @@ import TemplateSelector from '@/components/TemplateSelector';
 import { exportToPDF } from '@/lib/pdfExport';
 import { motion } from 'framer-motion';
 
+// Define CV type since we can't import it from server
+type CV = {
+  id: string;
+  title: string;
+  content: any;
+  template: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 export default function EditorPage({ params }: { params: { id: string } }) {
   const { id } = params;
   const [cv, setCV] = useState<CV | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   
   // Get state from Zustand store
@@ -28,27 +36,18 @@ export default function EditorPage({ params }: { params: { id: string } }) {
     setTemplate 
   } = useStore();
 
-  useEffect(() => {
-    // Redirect if not authenticated
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, authLoading, router]);
-
   // Fetch CV data
   useEffect(() => {
     const fetchCV = async () => {
-      if (!user) return;
-      
       try {
-        const { data, error } = await supabase
-          .from('cvs')
-          .select('*')
-          .eq('id', id)
-          .eq('user_id', user.id)
-          .single();
-          
-        if (error) throw error;
+        // Update to use API instead of direct call with userId
+        const response = await fetch(`/api/cvs/${id}`);
+        
+        if (!response.ok) {
+          throw new Error('CV not found');
+        }
+        
+        const data = await response.json();
         
         if (data) {
           setCV(data);
@@ -56,7 +55,9 @@ export default function EditorPage({ params }: { params: { id: string } }) {
           setTitle(data.title);
           setTemplate(data.template);
           // Initialize sections in the store
-          useStore.setState({ content: data.content });
+          useStore.setState({ content: data.content as any });
+        } else {
+          throw new Error('CV not found');
         }
       } catch (error) {
         console.error('Error fetching CV:', error);
@@ -67,26 +68,29 @@ export default function EditorPage({ params }: { params: { id: string } }) {
     };
 
     fetchCV();
-  }, [id, user, setTitle, setTemplate]);
+  }, [id, setTitle, setTemplate]);
 
   // Save CV data
   const saveCV = async () => {
-    if (!user || !cv) return;
-    
     setSaving(true);
     
     try {
-      const { error } = await supabase
-        .from('cvs')
-        .update({
+      // Update to use API instead of direct call with userId
+      const response = await fetch(`/api/cvs/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           title,
           content,
           template,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', id);
-        
-      if (error) throw error;
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save changes');
+      }
       
     } catch (error) {
       console.error('Error saving CV:', error);
@@ -101,7 +105,13 @@ export default function EditorPage({ params }: { params: { id: string } }) {
     await exportToPDF('cv-content', `${title.replace(/\s+/g, '-')}.pdf`);
   };
 
-  if (loading || authLoading) {
+  // Update the template handler
+  const handleTemplateChange = (template: string) => {
+    setTemplate(template);
+    console.log("Template changed to:", template); // For debugging
+  };
+
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[80vh]">
         <div className="glass-card">
@@ -148,7 +158,7 @@ export default function EditorPage({ params }: { params: { id: string } }) {
             
             <TemplateSelector 
               selectedTemplate={template} 
-              onSelectTemplate={setTemplate} 
+              onSelectTemplate={handleTemplateChange} 
             />
             
             <div className="flex gap-3 mt-6">
@@ -188,7 +198,10 @@ export default function EditorPage({ params }: { params: { id: string } }) {
         {/* CV Preview */}
         <div className="w-full md:w-2/3 lg:w-3/4">
           <div className="glass-card">
-            <div id="cv-content" className={`bg-white text-black p-8 rounded-lg shadow-lg ${template}`}>
+            <div 
+              id="cv-content" 
+              className={`bg-white text-black p-8 rounded-lg shadow-lg cv-${template}`}
+            >
               {/* CV content will be rendered here based on selected template */}
               <h1 className="text-3xl font-bold">{title}</h1>
               
